@@ -1,0 +1,10 @@
+-- Manual RLS smoke tests. Run in the Supabase SQL editor after creating 2 teachers, 2 students and 1 assignment (teacher A ↔ student A).
+-- Replace the UUIDs, then run each block; every "expect" line must hold.
+-- begin; set local role authenticated; select set_config('request.jwt.claims','{"sub":"<TEACHER_B_USER_ID>"}',true);
+--   select count(*) from students where id = '<STUDENT_A_ID>';            -- expect 0 (teacher B is not assigned)
+--   select count(*) from chat_messages;                                    -- expect 0
+-- rollback;
+-- begin; set local role authenticated; select set_config('request.jwt.claims','{"sub":"<STUDENT_B_USER_ID>"}',true);
+--   select count(*) from fees where student_id = '<STUDENT_A_ID>';          -- expect 0
+--   insert into attendance(session_id,student_id,teacher_id,status) values (gen_random_uuid(),'<STUDENT_B_ID>','<TEACHER_A_ID>','present'); -- expect ERROR (RLS)
+-- rollback;

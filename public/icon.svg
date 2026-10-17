@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F0D27A"/><stop offset="0.5" stop-color="#C9962F"/><stop offset="1" stop-color="#9C7220"/></linearGradient></defs>
+<circle cx="512" cy="512" r="506" fill="#0A4A30"/>
+<circle cx="512" cy="512" r="490" fill="#FBF8F0"/>
+<circle cx="512" cy="512" r="478" fill="none" stroke="url(#gold)" stroke-width="7"/>
+<circle cx="512" cy="512" r="462" fill="none" stroke="#0A4A30" stroke-width="2"/>
+
+<path d="M330 570 L330 335 C330 255 440 232 512 128 C584 232 694 255 694 335 L694 570 Z" fill="#0A4A30"/>
+<path d="M350 570 L350 340 C350 272 450 248 512 160 C574 248 674 272 674 340 L674 570 Z" fill="#FBF8F0" stroke="url(#gold)" stroke-width="6"/>
+<path d="M366 570 L366 344 C366 286 458 262 512 182 C566 262 658 286 658 344 L658 570 Z" fill="none" stroke="#0A4A30" stroke-width="2.5"/>
+<path d="M526 238 A40 40 0 1 0 526 306 A36 36 0 1 1 526 238 Z" fill="url(#gold)" transform="translate(30,-12)"/>
+<polygon points="556.0,245.0 558.6,249.7 563.8,248.2 562.3,253.4 567.0,256.0 562.3,258.6 563.8,263.8 558.6,262.3 556.0,267.0 553.4,262.3 548.2,263.8 549.7,258.6 545.0,256.0 549.7,253.4 548.2,248.2 553.4,249.7" fill="url(#gold)"/>
+<line x1="512" y1="318" x2="512" y2="334" stroke="#0A4A30" stroke-width="5"/>
+<circle cx="512" cy="326" r="7" fill="#0A4A30"/>
+<path d="M444 428 C444 372 484 350 512 332 C540 350 580 372 580 428 Z" fill="#0A4A30"/>
+<rect x="411" y="352" width="14" height="76" fill="#0A4A30"/><polygon points="407,352 418,322 429,352" fill="#0A4A30"/><rect x="406" y="368" width="24" height="4" fill="url(#gold)"/><circle cx="418" cy="316" r="4" fill="url(#gold)"/><rect x="599" y="352" width="14" height="76" fill="#0A4A30"/><polygon points="595,352 606,322 617,352" fill="#0A4A30"/><rect x="594" y="368" width="24" height="4" fill="url(#gold)"/><circle cx="606" cy="316" r="4" fill="url(#gold)"/>
+<rect x="392" y="426" width="240" height="14" fill="#0A4A30"/>
+<line x1="400" y1="604" x2="512" y2="548" stroke="#0A4A30" stroke-width="18" stroke-linecap="round"/>
+<line x1="624" y1="604" x2="512" y2="548" stroke="#0A4A30" stroke-width="18" stroke-linecap="round"/>
+<path d="M512 478 C470 456 428 456 392 468 L392 530 C428 518 470 520 512 544 Z" fill="#FBF8F0" stroke="#0A4A30" stroke-width="6" stroke-linejoin="round"/>
+<path d="M512 478 C554 456 596 456 632 468 L632 530 C596 518 554 520 512 544 Z" fill="#FBF8F0" stroke="#0A4A30" stroke-width="6" stroke-linejoin="round"/>
+<path d="M392 530 C428 518 470 520 512 544 L512 560 C470 538 428 536 392 548 Z" fill="url(#gold)"/>
+<path d="M632 530 C596 518 554 520 512 544 L512 560 C554 538 596 536 632 548 Z" fill="url(#gold)"/>
+<g stroke="#C9962F" stroke-width="2" fill="none"><path d="M410 486 C440 478 475 480 500 494"/><path d="M410 500 C440 492 475 494 500 508"/><path d="M524 494 C549 480 584 478 614 486"/><path d="M524 508 C549 494 584 492 614 500"/></g>
+<polygon points="250.0,330.0 254.7,338.5 264.1,335.9 261.5,345.3 270.0,350.0 261.5,354.7 264.1,364.1 254.7,361.5 250.0,370.0 245.3,361.5 235.9,364.1 238.5,354.7 230.0,350.0 238.5,345.3 235.9,335.9 245.3,338.5" fill="url(#gold)"/><polygon points="774.0,330.0 778.7,338.5 788.1,335.9 785.5,345.3 794.0,350.0 785.5,354.7 788.1,364.1 778.7,361.5 774.0,370.0 769.3,361.5 759.9,364.1 762.5,354.7 754.0,350.0 762.5,345.3 759.9,335.9 769.3,338.5" fill="url(#gold)"/>
+<circle cx="250" cy="396" r="4" fill="url(#gold)"/><circle cx="774" cy="396" r="4" fill="url(#gold)"/><circle cx="250" cy="304" r="4" fill="url(#gold)"/><circle cx="774" cy="304" r="4" fill="url(#gold)"/>
+<text x="512" y="742" text-anchor="middle" font-family="Liberation Serif, Georgia, serif" font-weight="700" font-size="128" fill="#0A4A30" textLength="760" lengthAdjust="spacingAndGlyphs">Khwaja Quran</text>
+<line x1="190" y1="812" x2="300" y2="812" stroke="url(#gold)" stroke-width="3"/><line x1="724" y1="812" x2="834" y2="812" stroke="url(#gold)" stroke-width="3"/>
+<text x="512" y="832" text-anchor="middle" font-family="Liberation Serif, Georgia, serif" font-weight="500" font-size="66" fill="url(#gold)" letter-spacing="24">ACADEMY</text>
+<text x="512" y="896" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="29" fill="#0A4A30" letter-spacing="7">ONLINE QURAN TEACHING</text>
+<line x1="390" y1="936" x2="480" y2="936" stroke="#0A4A30" stroke-width="2"/><line x1="544" y1="936" x2="634" y2="936" stroke="#0A4A30" stroke-width="2"/>
+<polygon points="512.0,919.0 516.0,926.3 524.0,924.0 521.7,932.0 529.0,936.0 521.7,940.0 524.0,948.0 516.0,945.7 512.0,953.0 508.0,945.7 500.0,948.0 502.3,940.0 495.0,936.0 502.3,932.0 500.0,924.0 508.0,926.3" fill="url(#gold)"/>
+</svg>
