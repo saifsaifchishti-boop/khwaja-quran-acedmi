@@ -1,0 +1,41 @@
+# HANDOFF — give this file + the project folder to the next Claude
+
+## Context
+Project: "Khwaja Quran Majeed Academy" online Quran academy (full spec = the owner's MASTER DEVELOPMENT PROMPT, attach it too). Owner speaks Hindi/Urdu; wants Urdu(RTL)/English UI, emerald/cream/gold branding (logo in `public/logo.svg`, already integrated), no fake stats/testimonials, no fake features. Owner also wants EVERYTHING configurable from the admin panel, especially payments: fee cards, payment accounts (JazzCash, Easypaisa, bank, etc.), transaction numbers, accounts.
+
+## Done in Part 1 (see README.md)
+Public site, language switcher, three-dot menu, theme, marquee (DB-driven, seamless loop, reduced-motion safe), courses, student registration → pending application with reference number, admin panel (dashboard stats from DB, applications, account creation via Supabase invite email, courses, marquee, contact settings, fee cards, payment methods CRUD, payment proof verification + receipts, manual payments, audit log), student login (ID or email), student dashboard, student fees page with proof upload. Schema: `supabase/migrations/001_init.sql`.
+
+## FIRST: verify
+The code was written with no network: run `npm install`, `npx tsc --noEmit`, `npm run lint`, `npm run build` and fix errors. Then run the setup in README.md and click through: register → admin approve → create account → activate via email → student login → fee card → payment submit → admin verify → receipt.
+
+## Remaining work (in priority order)
+1. **Email system.** Nothing sends email except Supabase's built-in invite/reset mail. Add a transactional provider (Resend recommended; env `RESEND_API_KEY`, `EMAIL_FROM`), an `email_templates` table editable in admin, an `email_logs` table with status/retry, and send: application received (applicant + admin), approved/rejected/info-requested (use `admin_note`), payment recorded/verified/rejected, fee due reminders, class notices. Hook into `decideApplication`, `submitApplication`, `reviewPayment`, `recordManualPayment` in the actions files.
+2. **Teacher side.** Teacher application form (+ document upload to private bucket), admin review/approve, teacher account creation by invite, teacher IDs (`TQ-` sequence), `teachers` table, role `teacher` already exists in enum and `requireRole` needs extending. Teacher dashboard with strict assigned-students-only RLS.
+3. **Teaching data model + student LMS.** Tables: enrollments, teacher_assignments, class_schedules (recurrence, time zones, conflict prevention), class_sessions, attendance, assignments, submissions, assessments/results, learning_materials, notifications. Student dashboard sections still missing: timetable (times in student's time zone), attendance, homework, materials, feedback, certificates (+ public verification page), profile edit, change password, support tickets. Admin: class/timetable management, teacher management, student edit/suspend/reactivate, reports + CSV export, pagination for students list, edit registration-form fields (currently fixed in `app/register/RegisterForm.tsx`).
+4. **Quran reader (core requirement).** Inside teacher LMS: all 114 surahs/30 juz, page + verse modes, search (surah name/number, ayah, juz, Arabic text), highlight, prev/next ayah, zoom, presentation mode, bookmarks + private notes linked to ayah, Copy button, share selected ayah with student during class. Import a properly licensed Uthmani dataset (e.g. Tanzil.net Uthmani text — check and document its license/attribution in README; do NOT type or generate Quran text, do not modify it). Amiri font is already loaded as `.quran` class; consider KFGQPC Uthmani font. Translation/tafseer only with named source.
+5. **Live classes.** Recommended: LiveKit (env `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`; token endpoint checks that the caller is the assigned teacher/student of that session). Camera/mic toggle, screen share, reconnect states, duration, device selection, minimize. No recording by default.
+6. **Chat.** Supabase Realtime: messages + receipts tables, RLS allowing only the assigned teacher–student pair, typing indicator via presence/broadcast, unread counts, delete-for-everyone with tombstone, attachments with type/size validation, report/safeguarding button, search.
+7. **Hardening.** Rate limiting on login/registration/payment submit (Upstash + `@upstash/ratelimit` or Vercel Firewall), admin MFA (Supabase TOTP), session management page, audit-log viewer page, privacy/terms/safeguarding pages (footer currently has no policy links — add real pages with owner-approved text), data retention policy, automated tests (Vitest/Playwright) for auth, RLS, registration, approval, fee/payment flows.
+8. **Nice-to-have.** Online payment gateway only via server-side verification + webhooks (label as gateway-verified only then); PDF receipts; password change in account pages; CSV export for fees/payments; admin editing of Urdu/English site texts (strings are in `lib/i18n.ts`); real course detail pages (`/courses/[slug]`); Urdu translations for admin/student screens (currently English only).
+
+## Decisions / gotchas
+- Account activation = Supabase `inviteUserByEmail` → `/auth/set-password`. No passwords are ever generated or emailed. Student login accepts Student ID (`KQ-YY-####`) or email.
+- Admin writes use the service-role client **after** `requireRole('admin')`; middleware only gates by login, each page re-checks role.
+- `fees.amount − discount − approved payments = balance`. Payments carry `source` (`student_submitted` | `manual` | `gateway`); only admin can approve; students can only insert pending rows (RLS).
+- Courses seed (`seed_dev.sql`) is unpublished by default so nothing is implied to be available.
+- Next 15 / React 19 (`cookies()` is async, `useActionState`). Versions pinned in package.json.
+
+
+---
+# UPDATE after Part 2 (read this first)
+**Not verified by a build** (no network). First: `npm install`, `npm run typecheck`, `npm run lint`, `npm run build`, `npm test`, run migration 002, import Tanzil, then click through the flow in README.
+
+## Done in Part 2
+Email system (Resend via REST, overridable templates, logs, retry, cron, fee reminders) hooked into applications, payments, teacher applications, class notices · teacher application + admin review + invite + TQ- ids · teacher dashboard/classes/student workspace (attendance, homework+grading, materials, feedback, assessments, notices) · scheduling with timezone-safe generation + DB overlap exclusion · student timetable/attendance/homework/materials/feedback/certificates(+public `/verify/<code>`)/profile/password/support/chat · admin: students (search, pagination, edit, suspend), teachers, assignments, classes, certificates, emails, policy pages, inbox (tickets + chat reports), audit viewer, reports + CSV, MFA page · Quran reader (surah/juz/search/verse+flow modes/zoom/presentation/bookmarks+notes/copy/share-to-student) · LiveKit class room · Realtime chat (typing, delete-for-everyone tombstone, attachments, report, search) · rate limiting.
+
+## Still open
+1. Chat **unread counts** (table `chat_reads` is written; no badge UI yet). 2. Quran **page-number (mushaf page) mode** — needs a page-mapping dataset; reader has verse list + continuous flow. Translation/tafsir only with a named licensed source. 3. Admin-editable **registration form fields** (form still fixed in `RegisterForm.tsx`). 4. Urdu translations for admin/teacher/student screens (English only; public site is bilingual). 5. **Session-management page** (only “sign out of all devices” exists). 6. Data-retention policy text/job. 7. Playwright e2e + automated RLS tests (only Vitest unit tests + manual `tests_rls.sql`). 8. Online gateway, PDF receipts, `/courses/[slug]`, editable site texts. 9. Teacher-owned materials shared to a whole course (materials are per student). 10. Group classes (sessions are 1 teacher : 1 student). 11. LiveKit: no chat/data features in-room, no waiting-room.
+
+## Gotchas
+Student/teacher writes that RLS cannot express (homework submit, chat delete, file uploads) use the service role **after** explicit checks in the action. `generate_sessions`, `next_*_code`, `rate_limit_hit` are callable only by service_role. `ADMIN_REQUIRE_MFA=true` redirects every admin page to /admin/security until AAL2.
