@@ -1,7 +1,9 @@
 import AdminShell from '@/components/AdminShell';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { signed } from '@/lib/files';
-import { decideTeacherApplication, createTeacherAccount, setTeacherStatus, assignTeacher, unassignTeacher } from '../actions2';
+import { createTeacherAccount, resetPassword } from '../accounts';
+import CredForm from '@/components/CredForm';
+import { decideTeacherApplication, setTeacherStatus, assignTeacher, unassignTeacher } from '../actions2';
 export const dynamic = 'force-dynamic';
 export default async function Page() {
   const db = supabaseAdmin();
@@ -18,10 +20,10 @@ export default async function Page() {
         <div className="flex gap-3">{(docs.get(a.id) ?? []).map((u, i) => u && <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="underline">Document {i + 1}</a>)}</div>
         <form className="flex flex-wrap gap-2"><input type="hidden" name="id" value={a.id} /><input name="admin_note" defaultValue={a.admin_note ?? ''} placeholder="Note to applicant (emailed)" className="inp flex-1 min-w-48" />
           <button formAction={decideTeacherApplication.bind(null, 'approved')} className="btn btn-sm">Approve</button><button formAction={decideTeacherApplication.bind(null, 'info_requested')} className="btn btn-sm btn-ghost">Ask info</button><button formAction={decideTeacherApplication.bind(null, 'rejected')} className="btn btn-sm btn-red">Reject</button></form>
-        {a.status === 'approved' && !madeSet.has(a.id) && <form action={createTeacherAccount}><input type="hidden" name="id" value={a.id} /><button className="btn btn-sm btn-gold">Create teacher account (sends activation email)</button></form>}</div>))}</div>
+        {a.status === 'approved' && !madeSet.has(a.id) && <CredForm action={createTeacherAccount} btn="Create teacher account" className="space-y-2"><input type="hidden" name="id" value={a.id} /></CredForm>}</div>))}</div>
     <h2 className="font-bold mt-8 mb-2">Teachers</h2><ul className="card divide-y divide-[var(--line)] text-sm">{(teachers ?? []).map(t => (
       <li key={t.id} className="p-3 flex flex-wrap gap-3 items-center justify-between"><span><b>{t.full_name}</b> <span className="font-mono">{t.teacher_code}</span> · {t.email} · {t.timezone} · {t.status}</span>
-        <form className="flex gap-1"><input type="hidden" name="id" value={t.id} /><button formAction={setTeacherStatus.bind(null, t.status === 'active' ? 'suspended' : 'active')} className="btn btn-sm btn-ghost">{t.status === 'active' ? 'Suspend' : 'Reactivate'}</button></form></li>))}</ul>
+        <form className="flex gap-1"><input type="hidden" name="id" value={t.id} /><button formAction={setTeacherStatus.bind(null, t.status === 'active' ? 'suspended' : 'active')} className="btn btn-sm btn-ghost">{t.status === 'active' ? 'Suspend' : 'Reactivate'}</button></form><details className="w-full"><summary className="cursor-pointer underline">Reset password</summary><CredForm action={resetPassword} btn="Set new password" className="space-y-2 mt-2"><input type="hidden" name="kind" value="teacher" /><input type="hidden" name="id" value={t.id} /></CredForm></details></li>))}</ul>
     <h2 className="font-bold mt-8 mb-2">Assign a teacher to a student</h2><form action={assignTeacher} className="card p-3 grid sm:grid-cols-3 gap-3">
       <select name="teacher_id" required className="inp"><option value="">Teacher…</option>{(teachers ?? []).filter(t => t.status === 'active').map(t => <option key={t.id} value={t.id}>{t.teacher_code} — {t.full_name}</option>)}</select>
       <select name="student_id" required className="inp"><option value="">Student…</option>{(students ?? []).map(x => <option key={x.id} value={x.id}>{x.student_code} — {x.full_name}</option>)}</select><button className="btn">Assign</button></form>

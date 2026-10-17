@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase/admin';
 import { EMAIL_DEFAULTS } from './email-defaults';
 import { render } from './render';
+import nodemailer from 'nodemailer';
 
 const paras = (s: string) => s.split('\n').filter(l => l.trim() !== '').map(l => `<p style="margin:0 0 10px">${l}</p>`).join('');
 
@@ -19,11 +20,18 @@ export async function buildEmail(key: string, vars: Record<string, string | numb
 async function deliver(id: number, to: string, subject: string, html: string, attempts: number) {
   const db = supabaseAdmin(); let status: 'sent' | 'failed' = 'failed'; let error: string | null = null;
   try {
-    if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) throw new Error('RESEND_API_KEY / EMAIL_FROM not configured');
+    const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
+    if (GMAIL_USER && GMAIL_APP_PASSWORD) { // Gmail SMTP (App Password). Replies from recipients arrive in this Gmail inbox.
+      const tr = nodemailer.createTransport({ host: 'smtp.gmail.com', port: 465, secure: true, auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD } });
+      await tr.sendMail({ from: `"${process.env.EMAIL_FROM_NAME ?? 'Khwaja Quran Majeed Academy'}" <${GMAIL_USER}>`, to, subject, html });
+      status = 'sent';
+    } else {
+    if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) throw new Error('Email not configured (set GMAIL_USER + GMAIL_APP_PASSWORD, or RESEND_API_KEY + EMAIL_FROM)');
     const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [to], subject, html }) });
     if (!r.ok) throw new Error(`Resend ${r.status}: ${(await r.text()).slice(0, 200)}`);
     status = 'sent';
+    }
   } catch (e) { error = e instanceof Error ? e.message : 'send failed'; }
   await db.from('email_logs').update({ status, error, attempts: attempts + 1, sent_at: status === 'sent' ? new Date().toISOString() : null }).eq('id', id);
   return status === 'sent';

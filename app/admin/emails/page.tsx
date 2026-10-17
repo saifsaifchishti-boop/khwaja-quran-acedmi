@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic';
 export default async function Page() {
   const db = supabaseAdmin(); const { data: ov } = await db.from('email_templates').select('*'); const o = new Map<string, any>((ov ?? []).map((x: any) => [x.key, x] as [string, any]));
   const { data: logs } = await db.from('email_logs').select('id,to_email,template_key,subject,status,attempts,error,created_at').order('created_at', { ascending: false }).limit(40);
-  const ready = !!process.env.RESEND_API_KEY && !!process.env.EMAIL_FROM;
-  return (<AdminShell><h1 className="text-2xl font-bold mb-2">Emails</h1>{!ready && <p className="card p-3 mb-3 text-red-700">RESEND_API_KEY / EMAIL_FROM are not set — emails are logged as “failed” and can be retried once configured.</p>}
+  const ready = (!!process.env.GMAIL_USER && !!process.env.GMAIL_APP_PASSWORD) || (!!process.env.RESEND_API_KEY && !!process.env.EMAIL_FROM);
+  return (<AdminShell><h1 className="text-2xl font-bold mb-2">Emails</h1>{!ready && <p className="card p-3 mb-3 text-red-700">Email is not configured (GMAIL_USER + GMAIL_APP_PASSWORD) — emails are logged as “failed” and can be retried once configured.</p>}
     <div className="flex gap-2 mb-4"><form action={retryEmails}><button className="btn btn-sm">Retry failed emails</button></form><form action={runFeeReminders}><button className="btn btn-sm btn-ghost">Send fee reminders now</button></form></div>
     <p className="text-sm opacity-70 mb-3">Each email is sent in English with the Urdu text below it. Use {'{{placeholders}}'} listed under each template.</p>
     <div className="space-y-3">{Object.entries(EMAIL_DEFAULTS).map(([key, d]) => { const t: any = o.get(key) ?? d; return (<details key={key} className="card p-3"><summary className="cursor-pointer font-semibold">{key} {o.has(key) ? '(customised)' : ''}</summary>

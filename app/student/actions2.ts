@@ -34,7 +34,7 @@ export async function updateProfile(_: R, fd: FormData): Promise<R> {
 }
 export async function changePassword(_: R, fd: FormData): Promise<R> {
   const { sb } = await me(); const pw = String(fd.get('password') ?? ''); if (pw.length < 10 || pw !== String(fd.get('confirm') ?? '')) return { error: 'Password must be 10+ characters and match the confirmation.' };
-  const { error } = await sb.auth.updateUser({ password: pw }); return error ? { error: error.message } : { ok: true };
+  const { error } = await sb.auth.updateUser({ password: pw, data: { must_change_password: false } }); return error ? { error: error.message } : { ok: true };
 }
 export async function signOutEverywhere() { const { sb } = await me(); await sb.auth.signOut({ scope: 'global' }); }
 export async function openTicket(_: R, fd: FormData): Promise<R> {

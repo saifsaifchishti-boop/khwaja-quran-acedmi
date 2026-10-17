@@ -13,6 +13,7 @@ export async function requireRole(role: Role, opts: { skipMfa?: boolean } = {}) 
   if (!user) redirect(LOGIN[role]);
   const { data: p } = await sb.from('profiles').select('role').eq('id', user.id).single();
   if (p?.role !== role) redirect(LOGIN[role]);
+  if (role !== 'admin' && user.user_metadata?.must_change_password === true) redirect('/account/password');
   if (role === 'admin' && !opts.skipMfa && process.env.ADMIN_REQUIRE_MFA === 'true') {
     const { data: a } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
     if (a?.currentLevel !== 'aal2') redirect('/admin/security');

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { allow, clientIp } from '@/lib/ratelimit';
+import { sendTemplate } from '@/lib/email';
 export type LoginState = { error?: string };
 async function signIn(email: string, password: string, role: 'admin' | 'student' | 'teacher'): Promise<LoginState | null> {
   if (!(await allow(`login-ip:${await clientIp()}`, 900, 20)) || !(await allow(`login-id:${email}`, 900, 8))) return { error: 'Too many attempts. Try again in 15 minutes.' };
@@ -51,6 +52,9 @@ export async function adminLogin(_: LoginState, fd: FormData): Promise<LoginStat
 export async function logout() { const sb = await supabaseServer(); await sb.auth.signOut(); redirect('/'); }
 export async function requestReset(_: LoginState, fd: FormData): Promise<LoginState> {
   const email = String(fd.get('email') ?? '').trim().toLowerCase();
-  if (email) { const sb = await supabaseServer(); await sb.auth.resetPasswordForEmail(email, { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/set-password` }); }
+  if (email && (await allow(`reset:${await clientIp()}`, 3600, 5))) {
+    const { data } = await supabaseAdmin().auth.admin.generateLink({ type: 'recovery', email, options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/set-password` } });
+    const link = data?.properties?.action_link; if (link) await sendTemplate('password_reset', email, { name: '', link });
+  }
   return { error: 'If that email has an account, a reset link has been sent.' }; // never reveal whether it exists
 }
