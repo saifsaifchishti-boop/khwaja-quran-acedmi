@@ -24,11 +24,11 @@ export default async function Page() {
   return (<AdminShell><h1 className="text-2xl font-bold mb-4">Payments</h1>
     <h2 className="font-bold mb-2">Awaiting verification ({withUrls.length})</h2>
     <div className="space-y-3">{withUrls.length === 0 && <p className="opacity-70">Nothing to review.</p>}{withUrls.map(p => (
-      <form key={p.id} action={reviewPayment} className="card p-4 space-y-2"><input type="hidden" name="id" value={p.id} />
+      <form key={p.id} className="card p-4 space-y-2"><input type="hidden" name="id" value={p.id} />
         <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm"><b>{p.students?.full_name} ({p.students?.student_code})</b><span>{p.fees?.title}</span><span className="font-bold">{money(p.amount, p.fees?.currency)}</span>
           <span>Txn: <span className="font-mono">{p.txn_ref ?? '—'}</span> {p.txn_ref && <CopyButton value={p.txn_ref} />}</span><span>Paid on: {p.paid_on}</span>{p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="underline">View proof</a>}</div>
         <input name="review_note" placeholder="Note (optional)" className="inp" />
-        <div className="flex gap-2"><button name="status" value="approved" className="btn btn-sm">Verify &amp; issue receipt</button><button name="status" value="rejected" className="btn btn-sm btn-red">Reject</button></div></form>))}</div>
+        <div className="flex gap-2"><button formAction={reviewPayment.bind(null, 'approved')} className="btn btn-sm">Verify &amp; issue receipt</button><button formAction={reviewPayment.bind(null, 'rejected')} className="btn btn-sm btn-red">Reject</button></div></form>))}</div>
     <h2 className="font-bold mt-8 mb-2">Record a manual payment (cash / received directly)</h2>
     <form action={recordManualPayment} className="card p-4 grid sm:grid-cols-3 gap-3"><div className="sm:col-span-3"><label className="lbl">Fee card</label>
       <select name="fee_id" required className="inp"><option value="">Select…</option>{(fees ?? []).map((f: any) => <option key={f.id} value={f.id}>{f.students?.student_code} — {f.students?.full_name} — {f.title}</option>)}</select></div>

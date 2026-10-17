@@ -12,8 +12,8 @@ const uuid = z.string().uuid();
 const redirectTo = () => `${process.env.NEXT_PUBLIC_SITE_URL}/auth/set-password`;
 
 // ---- Teacher applications / accounts
-export async function decideTeacherApplication(fd: FormData) {
-  const { user, db } = await admin(); const id = uuid.parse(fd.get('id')); const status = z.enum(['approved', 'rejected', 'info_requested']).parse(fd.get('status'));
+export async function decideTeacherApplication(statusIn: string, fd: FormData) {
+  const { user, db } = await admin(); const id = uuid.parse(fd.get('id')); const status = z.enum(['approved', 'rejected', 'info_requested']).parse(statusIn);
   const { data: a } = await db.from('teacher_applications').select('full_name,email,ref').eq('id', id).single();
   await db.from('teacher_applications').update({ status, admin_note: s(fd, 'admin_note'), decided_by: user.id, decided_at: new Date().toISOString() }).eq('id', id);
   await audit(user.id, `teacher_application.${status}`, 'teacher_application', id);
@@ -29,8 +29,8 @@ export async function createTeacherAccount(fd: FormData) {
   const { data: t, error: e2 } = await db.from('teachers').insert({ user_id: inv.user.id, teacher_code: code as string, application_id: id, full_name: a.full_name, email: a.email, whatsapp: a.whatsapp, gender: a.gender, timezone: a.timezone }).select('id,teacher_code').single();
   if (e2 || !t) throw new Error(e2?.message ?? 'Could not create teacher'); await audit(user.id, 'teacher.account_created', 'teacher', t.id, { code: t.teacher_code }); revalidatePath('/admin/teachers');
 }
-export async function setTeacherStatus(fd: FormData) {
-  const { user, db } = await admin(); const id = uuid.parse(fd.get('id')); const status = z.enum(['active', 'suspended', 'inactive']).parse(fd.get('status'));
+export async function setTeacherStatus(statusIn: string, fd: FormData) {
+  const { user, db } = await admin(); const id = uuid.parse(fd.get('id')); const status = z.enum(['active', 'suspended', 'inactive']).parse(statusIn);
   await db.from('teachers').update({ status }).eq('id', id); await audit(user.id, `teacher.${status}`, 'teacher', id); revalidatePath('/admin/teachers');
 }
 export async function assignTeacher(fd: FormData) {
@@ -72,8 +72,8 @@ export async function updateStudent(fd: FormData) {
   const p = z.object({ full_name: z.string().trim().min(2).max(120), whatsapp: z.string().trim().max(20).optional(), timezone: z.string().trim().min(1).max(60) }).parse(Object.fromEntries(fd));
   await db.from('students').update({ ...p, course_id: s(fd, 'course_id') }).eq('id', id); await audit(user.id, 'student.updated', 'student', id); revalidatePath('/admin/students');
 }
-export async function setStudentStatus(fd: FormData) {
-  const { user, db } = await admin(); const id = uuid.parse(fd.get('id')); const status = z.enum(['active', 'suspended', 'inactive']).parse(fd.get('status'));
+export async function setStudentStatus(statusIn: string, fd: FormData) {
+  const { user, db } = await admin(); const id = uuid.parse(fd.get('id')); const status = z.enum(['active', 'suspended', 'inactive']).parse(statusIn);
   await db.from('students').update({ status }).eq('id', id); await audit(user.id, `student.${status}`, 'student', id); revalidatePath('/admin/students');
 }
 export async function issueCertificate(fd: FormData) {

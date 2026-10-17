@@ -13,10 +13,10 @@ const num = (fd: FormData, k: string, def = 0) => { const n = Number(fd.get(k));
 async function admin() { const { user } = await requireRole('admin'); return { user, db: supabaseAdmin() }; }
 
 // ---- Applications ----
-export async function decideApplication(fd: FormData) {
+export async function decideApplication(statusIn: string, fd: FormData) {
   const { user, db } = await admin();
   const id = z.string().uuid().parse(fd.get('id'));
-  const status = z.enum(['approved', 'rejected', 'info_requested']).parse(fd.get('status'));
+  const status = z.enum(['approved', 'rejected', 'info_requested']).parse(statusIn);
   const { data: a } = await db.from('student_applications').select('first_name,last_name,email,ref').eq('id', id).single();
   await db.from('student_applications').update({ status, admin_note: s(fd, 'admin_note'), decided_by: user.id, decided_at: new Date().toISOString() }).eq('id', id);
   await audit(user.id, `application.${status}`, 'student_application', id);
@@ -112,9 +112,9 @@ export async function updateFee(fd: FormData) {
   await db.from('fees').update({ title: s(fd, 'title') ?? 'Fee', amount: num(fd, 'amount'), discount: num(fd, 'discount'), due_date: s(fd, 'due_date'), note: s(fd, 'note') }).eq('id', id);
   await audit(user.id, 'fee.updated', 'fee', id, { amount: num(fd, 'amount'), discount: num(fd, 'discount') }); revalidatePath('/admin/fees'); revalidatePath('/student');
 }
-export async function reviewPayment(fd: FormData) {
+export async function reviewPayment(statusIn: string, fd: FormData) {
   const { user, db } = await admin(); const id = z.string().uuid().parse(fd.get('id'));
-  const status = z.enum(['approved', 'rejected']).parse(fd.get('status'));
+  const status = z.enum(['approved', 'rejected']).parse(statusIn);
   const patch: Record<string, unknown> = { status, review_note: s(fd, 'review_note'), verified_by: user.id, verified_at: new Date().toISOString() };
   if (status === 'approved') patch.receipt_no = `RCT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}${randomBytes(1).toString('hex').toUpperCase()}`;
   const { data: upd } = await db.from('payments').update(patch).eq('id', id).eq('status', 'pending').select('amount,receipt_no,students(full_name,email,user_id),fees(title,currency)').maybeSingle();
