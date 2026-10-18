@@ -24,7 +24,10 @@ export default function RegisterForm({ d, lang, courses, preset }: { d: Dict; la
           <F n="first_name" label={d.firstName} /><F n="last_name" label={d.lastName} /><F n="father_name" label={d.fatherName} />
           <Sel n="gender" label={d.gender} opts={[['male', d.male], ['female', d.female]]} />
           <F n="dob" label={d.dob} type="date" /><F n="email" label={d.email} type="email" />
-          <F n="guardian_name" label={d.guardianName} req={false} /><F n="guardian_phone" label={d.guardianPhone} req={false} />
+          <div className="sm:col-span-2"><label className="lbl" htmlFor="photo">Profile photo (optional)</label>
+            <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="inp" aria-invalid={!!st.errors?.photo} />
+            <p className="text-xs opacity-70 mt-1">JPG, PNG or WebP, up to 2 MB. This becomes the student's permanent profile picture; changing it later requires the administrator.</p>
+            {st.errors?.photo && <p role="alert" className="text-red-600 text-sm mt-1">{st.errors.photo}</p>}</div>
         </Sec>
         <Sec t={d.secPersonal}>
           <Sel n="country" label={d.country} opts={COUNTRIES.map(c => [c, c])} /><F n="state" label={d.state} req={false} /><F n="city" label={d.city} />

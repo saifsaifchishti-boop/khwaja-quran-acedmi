@@ -13,6 +13,6 @@ export default function Page() {
         <div>Student ID: <b className="font-mono">{s?.student_code}</b> <CopyButton value={s?.student_code ?? ''} /></div><div>Email: {s?.email}</div>
         <div>Course: {(s as any)?.courses?.title_en ?? '—'}</div><div>Time zone: {s?.timezone}</div><div>Status: {s?.status}</div><div>Enrolled: {s && new Date(s.enrolled_at).toLocaleDateString()}</div></div>
       <Link href="/student/fees" className="card p-4 mt-4 block"><div className="text-sm opacity-70">Outstanding balance</div><div className="text-2xl font-bold">{money(due)}</div><div className="text-sm underline mt-1">Open fee cards →</div></Link>
-      <p className="mt-6 text-sm opacity-70">Timetable, attendance, homework and materials arrive in the next build stage.</p></>);
+      <p className="mt-6 text-sm opacity-70">Use the menu on the left to open your timetable, attendance, homework, materials and chat.</p></>);
   }}</StudentShell>);
 }

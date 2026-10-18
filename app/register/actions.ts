@@ -1,5 +1,6 @@
 'use server';
 import { z } from 'zod';
+import { saveAvatarFile } from '@/lib/avatars';
 import { redirect } from 'next/navigation';
 import { randomBytes } from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
@@ -33,9 +34,9 @@ export async function submitApplication(_: FormState, fd: FormData): Promise<For
     return { errors, message: 'Please correct the highlighted fields.' };
   }
   const v = p.data;
-  const age = (Date.now() - new Date(v.dob).getTime()) / 31557600000;
-  if (age < 18 && !v.guardian_name) return { errors: { guardian_name: 'Required for students under 18' } };
   const sb = supabaseAdmin();
+  let photo_path: string | undefined; const ph = fd.get('photo');
+  if (ph instanceof File && ph.size > 0) { const r = await saveAvatarFile(sb, 'applications', ph); if (!r.path) return { errors: { photo: r.error ?? 'Invalid picture.' } }; photo_path = r.path; }
   const since = new Date(Date.now() - 86400000).toISOString();
   const { count: dup } = await sb.from('student_applications').select('id', { count: 'exact', head: true })
     .ilike('email', v.email).in('status', ['pending', 'info_requested']);
@@ -44,7 +45,7 @@ export async function submitApplication(_: FormState, fd: FormData): Promise<For
   if ((recent ?? 0) > 300) return { message: 'Too many applications right now. Please try later.' };
   const ref = 'KQA-' + randomBytes(4).toString('hex').toUpperCase();
   const { consent_policy, consent_data, ...rest } = v;
-  const { error } = await sb.from('student_applications').insert({ ...rest, ref, consent_policy: true, consent_data: true });
+  const { error } = await sb.from('student_applications').insert({ ...rest, ref, photo_path, consent_policy: true, consent_data: true });
   if (error) { console.error('application insert failed', error.code); return { message: 'Could not save your application. Please try again.' }; }
   await sendTemplate('application_received', v.email, { name: v.first_name, ref });
   await sendTemplate('application_admin_alert', await adminEmail(), { name: `${v.first_name} ${v.last_name}`, ref });

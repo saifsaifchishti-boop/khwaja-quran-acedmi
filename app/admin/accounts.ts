@@ -25,6 +25,7 @@ export async function createStudentAccount(_: Cred, fd: FormData): Promise<Cred>
   const u = await makeUser(db, a.email, p.pw); if (!u.id) return { error: u.error };
   const { data: code } = await db.rpc('next_student_code'); const full = `${a.first_name} ${a.last_name}`;
   await db.from('profiles').upsert({ id: u.id, role: 'student', full_name: full });
+  if (a.photo_path) await db.from('profiles').update({ avatar_path: a.photo_path, avatar_locked: true }).eq('id', u.id); // admission photo becomes the permanent DP
   const { data: st, error: e2 } = await db.from('students').insert({ user_id: u.id, student_code: code as string, application_id: id, full_name: full, email: a.email, whatsapp: a.whatsapp,
     timezone: s(fd, 'timezone') ?? a.timezone, course_id: s(fd, 'course_id') ?? a.course_id, status: 'active' }).select('id,student_code').single();
   if (e2 || !st) { await db.auth.admin.deleteUser(u.id); return { error: e2?.message ?? 'Could not create student' }; }
