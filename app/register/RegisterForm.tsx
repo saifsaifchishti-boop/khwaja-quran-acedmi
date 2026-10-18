@@ -3,7 +3,7 @@ import { useActionState } from 'react';
 import { submitApplication, type FormState } from './actions';
 import type { Dict } from '@/lib/i18n';
 const COUNTRIES = ['Pakistan', 'India', 'Bangladesh', 'United Kingdom', 'United States', 'Canada', 'Australia', 'Saudi Arabia', 'United Arab Emirates', 'Other'];
-export default function RegisterForm({ d, lang, courses, preset }: { d: Dict; lang: string; courses: { id: string; title_en: string; title_ur: string }[]; preset?: string }) {
+export default function RegisterForm({ d, lang, courses, preset, feeLines = [] }: { d: Dict; lang: string; courses: { id: string; title_en: string; title_ur: string; fee?: number | string | null; currency?: string | null }[]; preset?: string; feeLines?: string[] }) {
   const [st, action, pending] = useActionState<FormState, FormData>(submitApplication, {});
   const tz = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC';
   const F = ({ n, label, type = 'text', req = true, ph }: { n: string; label: string; type?: string; req?: boolean; ph?: string }) => (
@@ -17,7 +17,10 @@ export default function RegisterForm({ d, lang, courses, preset }: { d: Dict; la
   const Sec = ({ t, children }: { t: string; children: React.ReactNode }) => (
     <section className="card overflow-hidden"><h2 className="bg-emerald text-cream text-center py-3 font-bold">{t}</h2><div className="p-4 grid gap-4 sm:grid-cols-2">{children}</div></section>);
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8"><h1 className="text-3xl font-bold mb-6">{d.regTitle}</h1>
+    <main className="max-w-3xl mx-auto px-4 py-8"><h1 className="text-3xl font-bold mb-4">{d.regTitle}</h1>
+      <section className="card p-4 mb-6 border-s-4 border-[var(--gold)]"><h2 className="font-bold">{lang === 'ur' ? 'فیس اور ادائیگی' : 'Fees and how to pay'}</h2>
+        <ul className="mt-2 text-sm space-y-1">{feeLines.map(x => <li key={x}>✓ {x}</li>)}</ul>
+        <p className="mt-2 text-sm opacity-80">{lang === 'ur' ? 'کورس کی فیس نیچے کورس کے انتخاب میں لکھی ہے۔ کلاس کا وقت منظوری کے بعد اکیڈمی خود طے کرتی ہے۔' : 'Each course fee is shown in the course list below. The academy arranges your class time after approval.'}</p></section>
       <form action={action} className="space-y-6" noValidate={false}>
         <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
         <Sec t={d.secStudent}>
@@ -37,10 +40,8 @@ export default function RegisterForm({ d, lang, courses, preset }: { d: Dict; la
         </Sec>
         <Sec t={d.secSubject}>
           <Sel n="language" label={d.prefLang} opts={[['Urdu', 'اردو / Urdu'], ['English', 'English'], ['Arabic', 'العربية / Arabic']]} />
-          <Sel n="course_id" label={d.course} opts={courses.map(c => [c.id, lang === 'ur' && c.title_ur ? c.title_ur : c.title_en])} />
-          <F n="level" label={d.level} req={false} /><F n="preferred_days" label={d.days} req={false} /><F n="preferred_time" label={d.time} req={false} />
-          <F n="duration_min" label={d.duration} type="number" req={false} />
-          <Sel n="teacher_gender_pref" label={d.teacherPref} opts={[['any', d.any], ['male', d.male], ['female', d.female]]} req={false} />
+          <Sel n="course_id" label={d.course} opts={courses.map(c => [c.id, (lang === 'ur' && c.title_ur ? c.title_ur : c.title_en) + (Number(c.fee) > 0 ? ` — ${c.currency ?? ''} ${Number(c.fee).toLocaleString()}` : '')])} />
+          <F n="level" label={d.level} req={false} />
           <div className="sm:col-span-2"><label className="lbl" htmlFor="experience">{d.experience}</label><textarea id="experience" name="experience" rows={2} className="inp" /></div>
           <div className="sm:col-span-2"><label className="lbl" htmlFor="notes">{d.notes}</label><textarea id="notes" name="notes" rows={3} className="inp" /></div>
         </Sec>

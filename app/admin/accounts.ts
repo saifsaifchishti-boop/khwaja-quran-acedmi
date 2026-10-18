@@ -41,6 +41,7 @@ export async function createTeacherAccount(_: Cred, fd: FormData): Promise<Cred>
   const { data: ex } = await db.from('teachers').select('id').eq('application_id', id).maybeSingle(); if (ex) return { error: 'Account already created.' };
   const u = await makeUser(db, a.email, p.pw); if (!u.id) return { error: u.error };
   const { data: code } = await db.rpc('next_teacher_code'); await db.from('profiles').upsert({ id: u.id, role: 'teacher', full_name: a.full_name });
+  if (a.photo_path) await db.from('profiles').update({ avatar_path: a.photo_path, avatar_locked: true }).eq('id', u.id); // application photo becomes the permanent DP
   const { data: t, error: e2 } = await db.from('teachers').insert({ user_id: u.id, teacher_code: code as string, application_id: id, full_name: a.full_name, email: a.email, whatsapp: a.whatsapp, gender: a.gender, timezone: a.timezone }).select('id,teacher_code').single();
   if (e2 || !t) { await db.auth.admin.deleteUser(u.id); return { error: e2?.message ?? 'Could not create teacher' }; }
   await audit(user.id, 'teacher.account_created', 'teacher', t.id, { code: t.teacher_code });

@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { allow, clientIp } from '@/lib/ratelimit';
 import { sendTemplate, adminEmail } from '@/lib/email';
+import { saveAvatarFile } from '@/lib/avatars';
 
 const S = z.object({
   full_name: z.string().trim().min(2).max(100), gender: z.enum(['male', 'female']), email: z.string().trim().toLowerCase().email().max(200),
@@ -25,18 +26,20 @@ export async function submitTeacherApplication(_: TState, fd: FormData): Promise
   const db = supabaseAdmin();
   const { count } = await db.from('teacher_applications').select('id', { count: 'exact', head: true }).ilike('email', p.data.email).in('status', ['pending', 'info_requested']);
   if (count) return { errors: { email: 'An application with this email is already under review.' } };
-  const files = fd.getAll('docs').filter((f): f is File => f instanceof File && f.size > 0).slice(0, 4);
+  const files = fd.getAll('docs').filter((f): f is File => f instanceof File && f.size > 0).slice(0, 8);
   const folder = crypto.randomUUID(); const paths: string[] = [];
   for (const f of files) {
-    if (!OK.includes(f.type) || f.size > 5 * 1024 * 1024) return { message: 'Documents must be JPG/PNG/PDF, max 5 MB each (up to 4 files).' };
+    if (!OK.includes(f.type) || f.size > 5 * 1024 * 1024) return { message: 'Documents must be JPG/PNG/PDF, max 5 MB each (up to 8 files).' };
     const path = `${folder}/${crypto.randomUUID()}.${f.type === 'application/pdf' ? 'pdf' : f.type.split('/')[1]}`;
     const { error } = await db.storage.from('teacher-docs').upload(path, f, { contentType: f.type });
     if (error) return { message: 'Document upload failed. Try again.' };
     paths.push(path);
   }
+  let photo_path: string | undefined; const ph = fd.get('photo');
+  if (ph instanceof File && ph.size > 0) { const r = await saveAvatarFile(db, 'applications', ph); if (!r.path) return { errors: { photo: r.error ?? 'Invalid picture.' } }; photo_path = r.path; }
   const ref = 'KQT-' + randomBytes(4).toString('hex').toUpperCase();
   const { consent, ...rest } = p.data;
-  const { error } = await db.from('teacher_applications').insert({ ...rest, ref, consent: true, doc_paths: paths });
+  const { error } = await db.from('teacher_applications').insert({ ...rest, ref, consent: true, doc_paths: paths, photo_path });
   if (error) { console.error('tapp insert', error.code); return { message: 'Could not save your application.' }; }
   await sendTemplate('teacher_app_received', p.data.email, { name: p.data.full_name, ref });
   await sendTemplate('application_admin_alert', await adminEmail(), { name: `${p.data.full_name} (teacher)`, ref });
