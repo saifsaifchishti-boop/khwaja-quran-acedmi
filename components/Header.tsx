@@ -17,7 +17,7 @@ export default async function Header() {
           <Image src="/logo.svg" alt="" width={44} height={44} /><span className="hidden sm:inline">{d.brand}</span>
         </Link>
         <nav className="hidden md:flex items-center gap-4 text-sm">
-          <Link href="/courses">{d.courses}</Link><Link href="/#contact">{d.contact}</Link>
+          <Link href="/courses">{d.courses}</Link><Link href="/teach">{d.teacherApply}</Link><Link href="/teacher/login">{d.teacherLogin}</Link><Link href="/#contact">{d.contact}</Link>
           <Link href="/login" className="btn btn-ghost btn-sm">{d.studentLogin}</Link>
           <Link href="/register" className="btn btn-sm">{d.register}</Link>
         </nav>

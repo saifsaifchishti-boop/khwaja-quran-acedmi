@@ -1,10 +1,8 @@
 import 'server-only';
 import { randomInt } from 'crypto';
-// 12-char temporary password without look-alike characters (no 0/O, 1/l/I).
+// Temporary password that is easy to read out and remember, e.g. "SunRose472". The person must replace it at first login.
+const WORDS = ['Sun', 'Moon', 'Star', 'Rose', 'Palm', 'Dove', 'Lamp', 'Rain', 'Hill', 'Lake', 'Pearl', 'Noor', 'Nile', 'Date', 'Fig', 'Olive', 'Cloud', 'Sky', 'Wind', 'Sand', 'Gold', 'Mint', 'Leaf', 'Seed', 'Wave', 'Dawn', 'Bloom', 'Peace', 'Light', 'Honey'];
 export function genPassword() {
-  const sets = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnpqrstuvwxyz', '23456789'];
-  const all = sets.join(''); const out = sets.map(s => s[randomInt(s.length)]);
-  while (out.length < 12) out.push(all[randomInt(all.length)]);
-  for (let i = out.length - 1; i > 0; i--) { const j = randomInt(i + 1); [out[i], out[j]] = [out[j], out[i]]; }
-  return out.join('');
+  const w = () => WORDS[randomInt(WORDS.length)];
+  return `${w()}${w()}${randomInt(100, 1000)}`;
 }

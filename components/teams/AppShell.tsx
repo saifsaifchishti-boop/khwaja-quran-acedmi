@@ -13,7 +13,7 @@ export default async function AppShell({ role, nav, ctx, children, bleed }: { ro
   return (<div className="h-[100dvh] flex flex-col" dir="ltr">
     <header className="h-12 shrink-0 bg-[#0A4A30] text-white flex items-center gap-3 px-3">
       <Link href={role === 'admin' ? '/admin' : role === 'teacher' ? '/teacher' : '/student'} className="flex items-center gap-2 font-semibold min-w-0"><Image src="/logo.svg" alt="" width={30} height={30} /><span className="truncate">Khwaja Quran Majeed Academy</span></Link>
-      <span className="ms-auto text-xs opacity-80 capitalize hidden sm:inline">{role} portal</span><UserMenu id={user.id} name={name} role={role} has={has} v={v} /></header>
+      <span className="ms-auto text-xs opacity-80 capitalize hidden sm:inline">{role} portal · Teams update v2</span><UserMenu id={user.id} name={name} role={role} has={has} v={v} /></header>
     <div className="flex flex-col-reverse md:flex-row flex-1 min-h-0">
       <NavRail items={nav} />
       <main className={`flex-1 min-w-0 min-h-0 ${bleed ? '' : 'overflow-y-auto'}`}>
