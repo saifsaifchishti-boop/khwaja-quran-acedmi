@@ -1,5 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { ensureDirect } from '@/lib/dm';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { requireRole, audit, notify } from '@/lib/auth';
@@ -35,7 +36,8 @@ export async function setTeacherStatus(statusIn: string, fd: FormData) {
 }
 export async function assignTeacher(fd: FormData) {
   const { user, db } = await admin(); const teacher_id = uuid.parse(fd.get('teacher_id')); const student_id = uuid.parse(fd.get('student_id'));
-  await db.from('teacher_assignments').upsert({ teacher_id, student_id, active: true }, { onConflict: 'teacher_id,student_id' }); await audit(user.id, 'assignment.created', 'student', student_id, { teacher_id }); revalidatePath('/admin/teachers'); revalidatePath('/admin/classes');
+  await db.from('teacher_assignments').upsert({ teacher_id, student_id, active: true }, { onConflict: 'teacher_id,student_id' });
+  { const [{ data: tt }, { data: ss }] = await Promise.all([db.from('teachers').select('user_id').eq('id', teacher_id).maybeSingle(), db.from('students').select('user_id').eq('id', student_id).maybeSingle()]); if (tt?.user_id && ss?.user_id) await ensureDirect(db, tt.user_id, ss.user_id); } // chat opens automatically await audit(user.id, 'assignment.created', 'student', student_id, { teacher_id }); revalidatePath('/admin/teachers'); revalidatePath('/admin/classes');
 }
 export async function unassignTeacher(fd: FormData) {
   const { user, db } = await admin(); const id = uuid.parse(fd.get('id'));

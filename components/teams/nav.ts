@@ -2,7 +2,7 @@ import type { IconName } from './Icons';
 export type NavItem = { href: string; label: string; icon: IconName };
 export const ADMIN_NAV: NavItem[] = [
   { href: '/admin', label: 'Home', icon: 'home' }, { href: '/admin/chat', label: 'Chat', icon: 'chat' },
-  { href: '/admin/applications', label: 'Applications', icon: 'file' }, { href: '/admin/students', label: 'Students', icon: 'users' }, { href: '/admin/teachers', label: 'Teachers', icon: 'briefcase' },
+  { href: '/admin/applications', label: 'Applications', icon: 'file' }, { href: '/admin/demos', label: 'Demo requests', icon: 'video' }, { href: '/admin/students', label: 'Students', icon: 'users' }, { href: '/admin/teachers', label: 'Teachers', icon: 'briefcase' },
   { href: '/admin/people', label: 'Photos', icon: 'image' }, { href: '/admin/admission', label: 'Admission info', icon: 'clipboard' }, { href: '/admin/classes', label: 'Classes', icon: 'calendar' }, { href: '/admin/courses', label: 'Courses', icon: 'book' },
   { href: '/admin/fees', label: 'Fees', icon: 'card' }, { href: '/admin/payments', label: 'Payments', icon: 'dollar' }, { href: '/admin/marquee', label: 'Marquee', icon: 'megaphone' },
   { href: '/admin/emails', label: 'Emails', icon: 'mail' }, { href: '/admin/pages', label: 'Policies', icon: 'shield' }, { href: '/admin/inbox', label: 'Inbox', icon: 'inbox' },

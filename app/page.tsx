@@ -13,6 +13,7 @@ export default async function Home() {
   const { data: pol } = await sb.from('pages').select('slug,title_en,title_ur').eq('published', true).order('slug');
   const ct = (c?.value ?? {}) as Record<string, string>; const wa = (ct.whatsapp ?? '').replace(/\D/g, '');
   const quick: { href: string; icon: IconName; en: string; ur: string; sub: string; subUr: string }[] = [
+    { href: '/demo', icon: 'video', en: 'Free Demo Class', ur: 'مفت ڈیمو کلاس', sub: 'Try a live class first', subUr: 'پہلے لائیو کلاس آزمائیں' },
     { href: '/register', icon: 'user', en: 'Register as Student', ur: 'طالب علم رجسٹریشن', sub: 'Apply for admission', subUr: 'داخلے کے لیے درخواست' },
     { href: '/login', icon: 'lock', en: 'Student Login', ur: 'طالب علم لاگ اِن', sub: 'Classes, chat, homework', subUr: 'کلاسز، چیٹ، ہوم ورک' },
     { href: '/teacher/login', icon: 'briefcase', en: 'Teacher Login', ur: 'استاد لاگ اِن', sub: 'Your students and calls', subUr: 'آپ کے طلبہ اور کالز' },
@@ -42,11 +43,13 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 md:min-h-[78vh] grid md:grid-cols-2 gap-10 items-center">
           <div>
             <p className="quran text-2xl text-gold-light" dir="rtl">بسم اللہ الرحمن الرحیم</p>
+            <p className="mt-3 inline-block rounded-full bg-gold text-black font-bold px-4 py-1 text-sm">{L('Classes available 24/7', 'کلاسز ۲۴ گھنٹے، ہفتے کے ساتوں دن')}</p>
             <h1 className="text-4xl md:text-6xl font-bold mt-3 leading-tight">{d.brand}</h1>
             <p className="mt-4 text-xl md:text-2xl">{d.tagline}</p><p className="mt-3 text-lg opacity-90">{d.heroSub}</p>
             <div className="mt-8 flex flex-wrap gap-3 text-lg">
               <Link href="/register" className="btn btn-gold !px-7 !py-3">{d.register}</Link>
-              <Link href="/login" className="btn bg-cream !text-emerald">{d.studentLogin}</Link>
+              <Link href="/demo" className="btn bg-cream !text-emerald">{L('Free Demo Class', 'مفت ڈیمو کلاس')}</Link>
+              <Link href="/login" className="btn btn-ghost !text-cream !border-cream">{d.studentLogin}</Link>
               <Link href="/teacher/login" className="btn btn-ghost !text-cream !border-cream">{d.teacherLogin}</Link>
               <Link href="/teach" className="btn btn-ghost !text-cream !border-cream">{d.teacherApply}</Link>
             </div>
@@ -62,6 +65,11 @@ export default async function Home() {
             <span className="w-11 h-11 rounded-full bg-emerald text-cream flex items-center justify-center"><Icon n={q.icon} size={22} /></span>
             <b>{L(q.en, q.ur)}</b><span className="text-sm opacity-70">{L(q.sub, q.subUr)}</span></Link>))}</div>
       </section>
+
+      <section id="demo" className="max-w-6xl mx-auto px-4 py-12"><div className="card p-6 md:p-8 flex flex-wrap items-center justify-between gap-5 border-s-4 border-[var(--gold)]">
+        <div className="max-w-2xl"><h2 className="text-3xl font-bold">{L('Try a free demo class', 'مفت ڈیمو کلاس آزمائیں')}</h2>
+          <p className="mt-2 opacity-85">{L('Meet a teacher in a live one-to-one video class before you decide. Fill in a short form and we will arrange it. Our service runs 24/7, so we can find a time that suits you.', 'فیصلے سے پہلے لائیو ون ٹو ون ویڈیو کلاس میں استاد سے ملیں۔ مختصر فارم پُر کریں، ہم وقت طے کر لیں گے۔ ہماری سروس ۲۴ گھنٹے دستیاب ہے، اس لیے آپ کے مناسب وقت کا انتظام ہو جاتا ہے۔')}</p></div>
+        <Link href="/demo" className="btn btn-gold !px-7 !py-3 text-lg">{L('Apply for a demo class', 'ڈیمو کلاس کے لیے درخواست دیں')}</Link></div></section>
 
       <section id="admission" className="bg-emerald-100 dark:bg-[#12261b] scroll-mt-16"><div className="max-w-6xl mx-auto px-4 py-12">
         <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-3xl font-bold">{L('Admission', 'داخلہ')}</h2><p className="opacity-80 mt-1">{L('Everything you need to know before you apply.', 'درخواست دینے سے پہلے جو کچھ جاننا ضروری ہے۔')}</p></div>
