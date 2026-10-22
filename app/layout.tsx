@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter, Noto_Nastaliq_Urdu, Amiri } from 'next/font/google';
 import { getLang } from '@/lib/i18n';
-import Marquee from '@/components/Marquee';
+import TopBar from '@/components/TopBar';
 import Header from '@/components/Header';
 import GlobalLoader from '@/components/GlobalLoader';
 import Footer from '@/components/Footer';
@@ -18,6 +18,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={l} dir={l === 'ur' ? 'rtl' : 'ltr'} suppressHydrationWarning className={`${inter.variable} ${urdu.variable} ${arabic.variable}`}>
       <head><script dangerouslySetInnerHTML={{ __html: "try{var m=localStorage.getItem('theme');if(m==='dark'||(!m&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}" }} /></head>
       <body className="font-sans min-h-screen"><GlobalLoader />
-        <Runtime><PublicChrome top={<><Marquee /><Header /></>} bottom={<Footer />}>{children}</PublicChrome></Runtime></body>
+        <Runtime><PublicChrome top={<><TopBar /><Header /></>} bottom={<Footer />}>{children}</PublicChrome></Runtime></body>
     </html>);
 }

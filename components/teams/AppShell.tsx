@@ -13,9 +13,9 @@ export default async function AppShell({ role, nav, ctx, children, bleed }: { ro
   return (<div className="h-[100dvh] flex flex-col" dir="ltr">
     <header className="h-12 shrink-0 bg-[#0A4A30] text-white flex items-center gap-3 px-3">
       <Link href={role === 'admin' ? '/admin' : role === 'teacher' ? '/teacher' : '/student'} className="flex items-center gap-2 font-semibold min-w-0"><Image src="/logo.svg" alt="" width={30} height={30} /><span className="truncate hidden md:inline">Khwaja Quran Majeed Academy</span></Link><CurrentPage items={nav} />
-      <span className="ms-auto text-xs opacity-80 capitalize hidden sm:inline">{role} portal · Teams update v2</span><UserMenu id={user.id} name={name} role={role} has={has} v={v} /></header>
+      <span className="ms-auto inline-flex items-center gap-1.5 text-xs bg-white/15 rounded-full px-2.5 py-1" title="Our service runs 24 hours a day, 7 days a week"><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />24/7<span className="hidden md:inline"> service live</span></span><span className="text-xs opacity-80 capitalize hidden lg:inline">{role} portal</span><UserMenu id={user.id} name={name} role={role} has={has} v={v} /></header>
     <div className="flex flex-col-reverse md:flex-row flex-1 min-h-0">
-      <NavRail items={nav} />
+      <NavRail items={nav} pinned={role === 'admin' ? 0 : undefined} />
       <main className={`flex-1 min-w-0 min-h-0 ${bleed ? '' : 'overflow-y-auto'}`}>
         {role !== 'admin' && !has && <Link href="/account/photo" className="block bg-[var(--gold)] text-black text-sm text-center py-2 px-3 font-medium">Please add your profile photo. It becomes your permanent picture, so choose a clear one.</Link>}
         {bleed ? <div className="h-full">{children}</div> : <div className="max-w-6xl mx-auto px-4 py-6">{children}</div>}</main></div></div>);

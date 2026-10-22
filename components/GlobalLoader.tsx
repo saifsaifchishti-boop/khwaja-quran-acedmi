@@ -13,7 +13,7 @@ export default function GlobalLoader() {
       const a = (e.target as HTMLElement | null)?.closest('a'); if (!a) return; const h = a.getAttribute('href');
       if (!h || !h.startsWith('/') || h.startsWith('//') || a.target === '_blank' || a.hasAttribute('download')) return;
       const u = new URL(h, location.href); if (u.pathname === location.pathname && u.search === location.search) return;
-      clearTimeout(navT.current); navT.current = setTimeout(() => { setNav(true); navT.current = setTimeout(() => setNav(false), 12000); }, 120);
+      clearTimeout(navT.current); setNav(true); navT.current = setTimeout(() => setNav(false), 12000);
     };
     document.addEventListener('click', click); return () => document.removeEventListener('click', click);
   }, []);

@@ -12,12 +12,12 @@ export function CurrentPage({ items }: { items: NavItem[] }) {
   return cur ? <span className="hidden sm:flex items-center gap-1 text-sm opacity-90 min-w-0"><span aria-hidden>›</span><b className="truncate">{cur.label}</b></span> : null;
 }
 // Teams-style side bar: a few pinned buttons, the page you are on, and a three-dot button that opens the full ordered menu.
-export default function NavRail({ items }: { items: NavItem[] }) {
+export default function NavRail({ items, pinned = PINNED }: { items: NavItem[]; pinned?: number }) {
   const path = usePathname(); const { unread } = useRt(); const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [path]);
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
   const cur = items.filter(i => match(path, i.href)).sort((a, b) => b.href.length - a.href.length)[0];
-  const shown = items.slice(0, PINNED); if (cur && !shown.includes(cur)) shown.push(cur);
+  const shown = items.slice(0, pinned); if (cur && !shown.includes(cur)) shown.push(cur);
   const badge = (i: NavItem) => i.icon === 'chat' && unread > 0 && <span className="absolute -top-2 -end-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center">{unread > 99 ? '99+' : unread}</span>;
   return (<>
     <nav aria-label="Main" className="shrink-0 bg-[#073624] text-white flex md:flex-col md:w-[78px] w-full md:py-2 border-t md:border-t-0 border-white/10 justify-around md:justify-start">

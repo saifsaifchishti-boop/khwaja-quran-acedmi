@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { AccessToken } from 'livekit-server-sdk';
 import { supabaseServer } from '@/lib/supabase/server';
 import { allow } from '@/lib/ratelimit';
-// LiveKit token for a chat call. Row-level security only returns the call to members of its conversation. Calls are never recorded.
+// LiveKit token for a chat call. Row-level security only returns the call to members of its conversation. 
 export async function POST(req: Request) {
   const { callId } = await req.json().catch(() => ({})); if (typeof callId !== 'string' || !/^[0-9a-f-]{36}$/i.test(callId)) return NextResponse.json({ error: 'Bad request' }, { status: 400 });
   const sb = await supabaseServer(); const { data: { user } } = await sb.auth.getUser(); if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

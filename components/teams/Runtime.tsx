@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Room, RoomEvent, Track, type Participant } from 'livekit-client';
 import { supabaseBrowser } from '@/lib/supabase/browser';
-import { callInfo, logCall, touchSeen } from '@/app/teams-actions';
+import { callInfo, logCall, touchSeen, sendAttachment } from '@/app/teams-actions';
 import { quiet } from '@/lib/quiet';
 import Avatar from './Avatar';
 import Icon from './Icons';
@@ -46,6 +46,35 @@ export default function Runtime({ children }: { children: React.ReactNode }) {
   const [secs, setSecs] = useState(0); const [mic, setMic] = useState(true); const [cam, setCam] = useState(false); const [share, setShare] = useState(false); const [err, setErr] = useState(''); const [toast, setToast] = useState('');
   const liveAt = useRef<number | null>(null); const hadRemote = useRef(false); const ringTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const api = useRef<{ start: Rt['startCall'] }>({ start: async () => {} });
+  // Call recording (audio of everyone on the call). The other side is told, and the file is shared into the chat when recording stops.
+  const recR = useRef<{ mr: MediaRecorder; ctx: AudioContext; dest: MediaStreamAudioDestinationNode; src: Map<string, { node: MediaStreamAudioSourceNode; tid: string }>; chunks: Blob[]; convId: string; mime: string; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const [rec, setRec] = useState(false); const [peerRec, setPeerRec] = useState(false);
+  const tell = (on: boolean) => { try { void room.current?.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ t: 'rec', on })), { reliable: true }).catch(() => {}); } catch { /* call already closed */ } };
+  function wireRec() {
+    const r = recR.current; const rm = room.current; if (!r || !rm) return; const list: { id: string; t: MediaStreamTrack }[] = [];
+    const lm = rm.localParticipant.getTrackPublication(Track.Source.Microphone)?.track?.mediaStreamTrack; if (lm) list.push({ id: 'local', t: lm });
+    rm.remoteParticipants.forEach(p => { const mt = p.getTrackPublication(Track.Source.Microphone)?.track?.mediaStreamTrack; if (mt) list.push({ id: p.identity, t: mt }); });
+    list.forEach(({ id, t }) => { const old = r.src.get(id); if (old && old.tid === t.id) return; old?.node.disconnect(); const node = r.ctx.createMediaStreamSource(new MediaStream([t])); node.connect(r.dest); r.src.set(id, { node, tid: t.id }); });
+  }
+  function startRec() {
+    const c = callRef.current; const rm = room.current; if (!c || !rm || recR.current || c.phase !== 'live') return;
+    try {
+      const ctx = new AudioContext(); void ctx.resume().catch(() => {}); const dest = ctx.createMediaStreamDestination(); const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const mr = new MediaRecorder(dest.stream, { mimeType: mime, audioBitsPerSecond: 24000 }); const chunks: Blob[] = []; mr.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      recR.current = { mr, ctx, dest, src: new Map(), chunks, convId: c.convId, mime, timer: setTimeout(() => stopRec(true), 20 * 60 * 1000) }; // 20 minutes keeps the file small enough to share
+      wireRec(); mr.start(1000); setRec(true); tell(true);
+    } catch { recR.current = null; say('Recording is not supported on this device.'); }
+  }
+  function stopRec(sendIt: boolean) {
+    const r = recR.current; if (!r) return; recR.current = null; clearTimeout(r.timer); setRec(false); tell(false);
+    r.mr.onstop = async () => {
+      r.src.forEach(x => x.node.disconnect()); void r.ctx.close().catch(() => {}); if (!sendIt) return;
+      const f = new File(r.chunks, `call-recording.${r.mime === 'audio/webm' ? 'webm' : 'm4a'}`, { type: r.mime });
+      if (f.size < 2000) { say('The recording was empty.'); return; } if (f.size > 4.3 * 1024 * 1024) { say('The recording is too large to share (limit about 4 MB).'); return; }
+      const fd = new FormData(); fd.set('cid', r.convId); fd.set('file', f); const res = await quiet(() => sendAttachment(fd)); say(res.error ? res.error : 'Call recording shared in the chat.');
+    };
+    if (r.mr.state !== 'inactive') r.mr.stop();
+  }
 
   useEffect(() => {
     let on = true;
@@ -59,7 +88,7 @@ export default function Runtime({ children }: { children: React.ReactNode }) {
 
   const say = useCallback((m: string) => { setToast(m); setTimeout(() => setToast(''), 3500); }, []);
   function finish(note?: string) {
-    clearTimeout(ringTimer.current); const rm = room.current; room.current = null; rm?.disconnect(); liveAt.current = null; hadRemote.current = false;
+    if (recR.current) stopRec(true); setPeerRec(false); clearTimeout(ringTimer.current); const rm = room.current; room.current = null; rm?.disconnect(); liveAt.current = null; hadRemote.current = false;
     setSecs(0); setShare(false); setErr(''); setCall(null); callRef.current = null; if (note) say(note);
   }
   function goLive() { if (callRef.current && callRef.current.phase !== 'live') { clearTimeout(ringTimer.current); liveAt.current = Date.now(); setCall(c => c && { ...c, phase: 'live' }); callRef.current = { ...callRef.current, phase: 'live' }; } }
@@ -75,8 +104,9 @@ export default function Runtime({ children }: { children: React.ReactNode }) {
       const rm = new Room({ adaptiveStream: true, dynacast: true }); room.current = rm;
       rm.on(RoomEvent.ParticipantConnected, () => { hadRemote.current = true; goLive(); force(); })
         .on(RoomEvent.ParticipantDisconnected, () => { force(); if (rm.remoteParticipants.size === 0 && hadRemote.current) void leave(); })
-        .on(RoomEvent.TrackSubscribed, force).on(RoomEvent.TrackUnsubscribed, force).on(RoomEvent.TrackMuted, force).on(RoomEvent.TrackUnmuted, force)
-        .on(RoomEvent.LocalTrackPublished, force).on(RoomEvent.LocalTrackUnpublished, force)
+        .on(RoomEvent.TrackSubscribed, () => { force(); wireRec(); }).on(RoomEvent.TrackUnsubscribed, force).on(RoomEvent.TrackMuted, force).on(RoomEvent.TrackUnmuted, force)
+        .on(RoomEvent.LocalTrackPublished, () => { force(); wireRec(); }).on(RoomEvent.LocalTrackUnpublished, force)
+        .on(RoomEvent.DataReceived, (payload: Uint8Array) => { try { const m = JSON.parse(new TextDecoder().decode(payload)) as { t?: string; on?: boolean }; if (m.t === 'rec') setPeerRec(!!m.on); } catch { /* not ours */ } })
         .on(RoomEvent.Reconnecting, () => setErr('Connection lost. Reconnecting…')).on(RoomEvent.Reconnected, () => setErr(''))
         .on(RoomEvent.Disconnected, () => { if (room.current === rm) finish('The call has ended.'); });
       await rm.connect(j.url, j.token);
@@ -147,6 +177,7 @@ export default function Runtime({ children }: { children: React.ReactNode }) {
       <div className={`flex items-center justify-between gap-2 ${call.mini ? 'mb-2' : 'px-4 py-3'}`}><div className="min-w-0"><div className="font-semibold truncate">{call.title}</div>
         <div className="text-xs opacity-80">{call.phase === 'ringing' ? 'Calling…' : call.phase === 'connecting' ? 'Connecting…' : mmss(secs)}{err ? ` · ${err}` : ''}</div></div>
         {call.mini && <button onClick={() => setCall({ ...call, mini: false })} aria-label="Expand call" className="p-2 rounded hover:bg-white/10"><Icon n="maximize" size={18} /></button>}</div>
+      {(rec || peerRec) && !call.mini && <div role="status" className="bg-red-600 text-white text-xs text-center py-1 px-3">● {rec ? 'You are recording this call. The other person has been told.' : 'The other person is recording this call.'}</div>}
       <div className={call.mini ? 'hidden' : 'flex-1 min-h-0 relative p-3'}>
         {remotes.length === 0 ? (<div className="h-full flex flex-col items-center justify-center gap-4 text-center">{call.peerId ? <Avatar id={call.peerId} name={call.title} size={120} /> : <div className="text-5xl">👥</div>}
           <div className="text-lg">{call.phase === 'ringing' ? `Calling ${call.title}…` : 'Waiting for others to join…'}</div></div>)
@@ -157,6 +188,7 @@ export default function Runtime({ children }: { children: React.ReactNode }) {
         <button onClick={() => toggle('mic')} aria-label={mic ? 'Mute' : 'Unmute'} title={mic ? 'Mute' : 'Unmute'} className={`${btn} ${mic ? 'bg-white/15 hover:bg-white/25' : 'bg-white text-neutral-900'}`}><Icon n={mic ? 'mic' : 'micoff'} /></button>
         {!call.mini && <><button onClick={() => toggle('cam')} aria-label={cam ? 'Turn camera off' : 'Turn camera on'} title={cam ? 'Turn camera off' : 'Turn camera on'} className={`${btn} ${cam ? 'bg-white/15 hover:bg-white/25' : 'bg-white text-neutral-900'}`}><Icon n={cam ? 'video' : 'videooff'} /></button>
           <button onClick={() => toggle('share')} aria-label={share ? 'Stop sharing' : 'Share screen'} title={share ? 'Stop sharing' : 'Share screen'} className={`${btn} ${share ? 'bg-green-600' : 'bg-white/15 hover:bg-white/25'}`}><Icon n="screen" /></button>
+          <button onClick={() => (rec ? stopRec(true) : startRec())} disabled={call.phase !== 'live'} aria-label={rec ? 'Stop recording and share it in the chat' : 'Record the call'} title={rec ? 'Stop recording and share it in the chat' : 'Record the call'} className={`${btn} ${rec ? 'bg-red-600 animate-pulse' : 'bg-white/15 hover:bg-white/25'} disabled:opacity-40`}>{rec ? <span className="w-4 h-4 bg-white rounded-sm" /> : <span className="w-4 h-4 rounded-full border-2 border-white flex items-center justify-center"><span className="w-2 h-2 rounded-full bg-red-500" /></span>}</button>
           <button onClick={() => setCall({ ...call, mini: true })} aria-label="Minimize" title="Minimize" className={`${btn} bg-white/15 hover:bg-white/25`}><Icon n="minimize" /></button></>}
         <button onClick={() => void leave()} aria-label="Leave call" title="Leave call" className={`${btn} bg-red-600 hover:bg-red-700 w-14`}><Icon n="phone" rot={135} /></button></div></div>)}
     {toast && <div role="status" className="fixed bottom-6 start-1/2 -translate-x-1/2 z-[96] bg-neutral-900 text-white text-sm rounded-full px-4 py-2 shadow-lg">{toast}</div>}

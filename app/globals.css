@@ -16,3 +16,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .kqa-rev { animation-direction: reverse; }
 .kqa-track:hover { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .kqa-track { animation:none; flex-wrap:wrap; width:auto; } .kqa-dup { display:none; } }
+
+:root { --hero:#f6f1e4; } .dark { --hero:#0e1a14; }
+@keyframes kqspin { to { transform:rotate(360deg); } }
